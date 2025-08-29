@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:docs.tryopine.com)",
+      "Bash(npm install)",
+      "Bash(npm run build:*)",
+      "Bash(npm run docker:build:*)",
+      "Bash(npm audit:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

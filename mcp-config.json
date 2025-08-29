@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "opine": {
+      "command": "node",
+      "args": ["build/index.js"],
+      "env": {
+        "OPINE_API_KEY": ""
+      }
+    }
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "name": "opine-mcp-server",
+  "version": "1.0.0",
+  "description": "MCP server for querying Opine deals and evaluations",
+  "main": "build/index.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "start": "node build/index.js",
+    "dev": "tsx src/index.ts",
+    "inspector": "npm run build && npx @modelcontextprotocol/inspector build/index.js",
+    "inspector:config": "npm run build && npx @modelcontextprotocol/inspector mcp-config.json",
+    "docker:build": "docker build -t opine-mcp-server .",
+    "docker:run": "docker run -e OPINE_API_KEY=\"$OPINE_API_KEY\" -i opine-mcp-server"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "node-fetch": "^3.3.2"
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/inspector": "^0.16.5",
+    "@types/node": "^20.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.0.0"
+  }
+}
