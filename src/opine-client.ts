@@ -7,7 +7,9 @@ import {
   EvaluationsResponse,
   ListDealsParams,
   GetDealParams,
-  ListEvaluationsParams
+  ListEvaluationsParams,
+  TicketsResponse,
+  ListTicketsParams
 } from './types.js';
 
 export class OpineClient {
@@ -56,5 +58,9 @@ export class OpineClient {
 
   async listEvaluations(params: ListEvaluationsParams = {}): Promise<EvaluationsResponse> {
     return this.makeRequest<EvaluationsResponse>('/evaluations', params);
+  }
+
+  async listTickets(params: ListTicketsParams = {}): Promise<TicketsResponse> {
+    return this.makeRequest<TicketsResponse>('/tickets', params);
   }
 }

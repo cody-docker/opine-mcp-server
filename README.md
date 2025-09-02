@@ -1,12 +1,13 @@
 # Opine MCP Server
 
-A Model Context Protocol (MCP) server for querying deals and evaluations from the Opine CRM API.
+A Model Context Protocol (MCP) server for querying deals, evaluations, and tickets from the Opine CRM API.
 
 ## Features
 
 - **List Deals**: Query deals with filtering options
 - **Get Deal**: Retrieve specific deal details by ID
 - **List Evaluations**: Query evaluations with pagination
+- **List Tickets**: Query tickets/requests with pagination
 
 ## Installation
 
@@ -62,7 +63,7 @@ Before using the inspector, make sure to:
 2. Build the project with `npm run build`
 
 The inspector will open a web interface where you can:
-- View available tools (`list_deals`, `get_deal`, `list_evaluations`)
+- View available tools (`list_deals`, `get_deal`, `list_evaluations`, `list_tickets`)
 - Test tool calls with different parameters
 - See real-time responses from the Opine API
 - Debug any authentication or API issues
@@ -88,6 +89,11 @@ List evaluations with optional parameters:
 - `limit` (optional): Number of results (1-1000, default: 100)
 - `offset` (optional): Number of results to skip (default: 0)
 
+#### `list_tickets`
+List tickets/requests with optional parameters:
+- `limit` (optional): Number of results (1-1000, default: 100)
+- `offset` (optional): Number of results to skip (default: 0)
+
 ## API Requirements
 
 This server requires:
@@ -95,6 +101,7 @@ This server requires:
 - The following API scopes:
   - `deals:read` for deal operations
   - `evaluations:read` for evaluation operations
+  - `tickets:read` for ticket operations
 
 ## Error Handling
 
