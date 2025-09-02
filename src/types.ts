@@ -59,3 +59,43 @@ export interface ListEvaluationsParams {
   limit?: number;
   offset?: number;
 }
+
+export interface LinkedDeal {
+  id: number;
+  evaluationId: number;
+  name: string;
+  priority: 'BLOCKER' | 'HIGH' | 'MEDIUM' | 'LOW';
+  sharedWithBuyer: boolean;
+}
+
+export interface Ticket {
+  type: 'BUG' | 'FEATURE_REQUEST' | 'QUESTION' | 'OTHER';
+  state: 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED';
+  id: number;
+  createdAt: string;
+  updatedAt: string;
+  closedAt?: string;
+  organizationId: number;
+  createdByUserId: number;
+  title: string;
+  description: string;
+  vendorEntityId?: string;
+  vendorEntityKey?: string;
+  integrationInstallationId?: number;
+  targetDueDate?: string;
+  linkedDeals: LinkedDeal[];
+  dealAmountSum: number;
+  vendorEntityUrl?: string;
+}
+
+export interface TicketsResponse {
+  items: Ticket[];
+  limit: number;
+  offset: number;
+  totalCount: number;
+}
+
+export interface ListTicketsParams {
+  limit?: number;
+  offset?: number;
+}

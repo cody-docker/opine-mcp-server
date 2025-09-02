@@ -8,7 +8,7 @@ import {
   Tool
 } from '@modelcontextprotocol/sdk/types.js';
 import { OpineClient } from './opine-client.js';
-import { ListDealsParams, GetDealParams, ListEvaluationsParams } from './types.js';
+import { ListDealsParams, GetDealParams, ListEvaluationsParams, ListTicketsParams } from './types.js';
 
 class OpineMCPServer {
   private server: Server;
@@ -19,7 +19,7 @@ class OpineMCPServer {
       {
         name: 'opine-mcp-server',
         version: '1.0.0',
-        description: 'MCP server for querying Opine deals and evaluations'
+        description: 'MCP server for querying Opine deals, evaluations, and tickets'
       },
       {
         capabilities: {
@@ -100,6 +100,26 @@ class OpineMCPServer {
               }
             }
           }
+        },
+        {
+          name: 'list_tickets',
+          description: 'List tickets/requests from Opine',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              limit: {
+                type: 'number',
+                description: 'Number of results to return (1-1000, default: 100)',
+                minimum: 1,
+                maximum: 1000
+              },
+              offset: {
+                type: 'number',
+                description: 'Number of results to skip (default: 0)',
+                minimum: 0
+              }
+            }
+          }
         }
       ];
 
@@ -149,6 +169,20 @@ class OpineMCPServer {
           case 'list_evaluations': {
             const params = (args || {}) as ListEvaluationsParams;
             const result = await this.opineClient.listEvaluations(params);
+            
+            return {
+              content: [
+                {
+                  type: 'text',
+                  text: JSON.stringify(result, null, 2)
+                }
+              ]
+            };
+          }
+
+          case 'list_tickets': {
+            const params = (args || {}) as ListTicketsParams;
+            const result = await this.opineClient.listTickets(params);
             
             return {
               content: [
