@@ -42,6 +42,52 @@ For development:
 npm run dev
 ```
 
+### Docker
+
+#### Building the Docker Image
+
+```bash
+# Build the Docker image
+npm run docker:build
+
+# Or use docker directly
+docker build -t opine-mcp-server .
+```
+
+#### Running with Docker
+
+```bash
+# Run the container with your API key
+npm run docker:run
+
+# Or use docker directly
+docker run -e OPINE_API_KEY="your-api-key" -i opine-mcp-server
+```
+
+#### Publishing to DockerHub
+
+To publish your own version to DockerHub:
+
+```bash
+# Tag the image with your DockerHub username
+docker tag opine-mcp-server your-username/opine-mcp-server:latest
+docker tag opine-mcp-server your-username/opine-mcp-server:1.0.0
+
+# Push to DockerHub (requires docker login)
+docker push your-username/opine-mcp-server:latest
+docker push your-username/opine-mcp-server:1.0.0
+```
+
+#### Using Pre-built Image
+
+A pre-built image is available on DockerHub:
+
+```bash
+# Pull and run the pre-built image
+docker pull codygreen719/opine-mcp-server:latest
+docker run -e OPINE_API_KEY="your-api-key" -i codygreen719/opine-mcp-server:latest
+```
+
 ### Testing with MCP Inspector
 
 The MCP Inspector provides a web-based interface to test your MCP server. There are two ways to use it:
@@ -102,6 +148,18 @@ This server requires:
   - `deals:read` for deal operations
   - `evaluations:read` for evaluation operations
   - `tickets:read` for ticket operations
+
+## Docker Security
+
+This project uses hardened Docker images for enhanced security:
+- **Build Stage**: `demonstrationorg/dhi-node:24.7-alpine3.22-dev` (hardened with build tools)
+- **Runtime Stage**: `demonstrationorg/dhi-node:24.7-alpine3.22` (minimal hardened runtime)
+
+The multi-stage build ensures:
+- Minimal attack surface in production
+- No build tools or source code in final image
+- Hardened base images with security patches
+- Non-root user execution
 
 ## Error Handling
 
