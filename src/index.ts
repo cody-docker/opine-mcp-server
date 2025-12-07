@@ -81,6 +81,25 @@ class OpineMCPServer {
           }
         },
         {
+          name: 'get_salesforce_deal',
+          description: 'Get a specific deal by Salesforce ID (automatically prepends "eid:" prefix)',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              id: {
+                type: 'string',
+                description: 'Salesforce deal ID (will be automatically prefixed with "eid:")',
+                pattern: '^.+$'
+              },
+              includeSummary: {
+                type: 'boolean',
+                description: 'Include AI-generated deal summary'
+              }
+            },
+            required: ['id']
+          }
+        },
+        {
           name: 'list_evaluations',
           description: 'List evaluations from Opine',
           inputSchema: {
@@ -154,7 +173,30 @@ class OpineMCPServer {
             }
             const params = args as unknown as GetDealParams;
             const result = await this.opineClient.getDeal(params);
-            
+
+            return {
+              content: [
+                {
+                  type: 'text',
+                  text: JSON.stringify(result, null, 2)
+                }
+              ]
+            };
+          }
+
+          case 'get_salesforce_deal': {
+            if (!args || typeof args !== 'object' || !('id' in args) || typeof args.id !== 'string') {
+              throw new Error('Salesforce deal ID is required');
+            }
+            // Prepend 'eid:' to the Salesforce ID
+            const salesforceId = args.id;
+            const opineId = `eid:${salesforceId}`;
+            const params = {
+              id: opineId,
+              includeSummary: 'includeSummary' in args ? args.includeSummary as boolean : undefined
+            } as GetDealParams;
+            const result = await this.opineClient.getDeal(params);
+
             return {
               content: [
                 {
