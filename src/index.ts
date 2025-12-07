@@ -18,8 +18,7 @@ class OpineMCPServer {
     this.server = new Server(
       {
         name: 'opine-mcp-server',
-        version: '1.0.0',
-        description: 'MCP server for querying Opine deals, evaluations, and tickets'
+        version: '1.0.0'
       },
       {
         capabilities: {
