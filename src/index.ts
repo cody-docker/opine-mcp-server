@@ -9,6 +9,7 @@ import {
 } from '@modelcontextprotocol/sdk/types.js';
 import { OpineClient } from './opine-client.js';
 import { ListDealsParams, GetDealParams, ListEvaluationsParams, ListTicketsParams } from './types.js';
+import { ensureId18 } from './salesforce-utils.js';
 
 class OpineMCPServer {
   private server: Server;
@@ -82,13 +83,13 @@ class OpineMCPServer {
         },
         {
           name: 'get_salesforce_deal',
-          description: 'Get a specific deal by Salesforce ID (automatically prepends "eid:" prefix)',
+          description: 'Get a specific deal by Salesforce ID (automatically converts 15-char to 18-char and prepends "eid:" prefix)',
           inputSchema: {
             type: 'object',
             properties: {
               id: {
                 type: 'string',
-                description: 'Salesforce deal ID (will be automatically prefixed with "eid:")',
+                description: 'Salesforce deal ID (15 or 18 characters, will be converted to 18-char format and prefixed with "eid:")',
                 pattern: '^.+$'
               },
               includeSummary: {
@@ -188,9 +189,11 @@ class OpineMCPServer {
             if (!args || typeof args !== 'object' || !('id' in args) || typeof args.id !== 'string') {
               throw new Error('Salesforce deal ID is required');
             }
-            // Prepend 'eid:' to the Salesforce ID
+            // Convert 15-char Salesforce ID to 18-char format if needed
             const salesforceId = args.id;
-            const opineId = `eid:${salesforceId}`;
+            const id18 = ensureId18(salesforceId);
+            // Prepend 'eid:' to the 18-character Salesforce ID
+            const opineId = `eid:${id18}`;
             const params = {
               id: opineId,
               includeSummary: 'includeSummary' in args ? args.includeSummary as boolean : undefined
