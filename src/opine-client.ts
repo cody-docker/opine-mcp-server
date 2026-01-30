@@ -9,7 +9,11 @@ import {
   GetDealParams,
   ListEvaluationsParams,
   TicketsResponse,
-  ListTicketsParams
+  ListTicketsParams,
+  SalesProcessesResponse,
+  ListSalesProcessesParams,
+  SalesProcessStagesResponse,
+  ListSalesProcessStagesParams
 } from './types.js';
 
 export class OpineClient {
@@ -62,5 +66,13 @@ export class OpineClient {
 
   async listTickets(params: ListTicketsParams = {}): Promise<TicketsResponse> {
     return this.makeRequest<TicketsResponse>('/tickets', params);
+  }
+
+  async listSalesProcesses(params: ListSalesProcessesParams = {}): Promise<SalesProcessesResponse> {
+    return this.makeRequest<SalesProcessesResponse>('/sales-processes', params);
+  }
+
+  async listSalesProcessStages(params: ListSalesProcessStagesParams = {}): Promise<SalesProcessStagesResponse> {
+    return this.makeRequest<SalesProcessStagesResponse>('/sales-process-stages', params);
   }
 }

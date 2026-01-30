@@ -62,20 +62,39 @@ npm run docker:run
 
 # Or use docker directly
 docker run -e OPINE_API_KEY="your-api-key" -i opine-mcp-server
+
+# Test MCP Server
+npx @modelcontextprotocol/inspector -- docker run -e OPINE_API_KEY="your_api_key" -i  --rm opine-mcp-server
 ```
 
 #### Publishing to DockerHub
 
-To publish your own version to DockerHub:
+To build and publish multi-architecture images (linux/amd64 and linux/arm64) to your own DockerHub account:
+
+1. Set your DockerHub username in an environment variable:
+
+   ```bash
+   export DOCKERHUB_USERNAME="your-dockerhub-username"
+   ```
+
+2. Make sure you are logged in to DockerHub:
+
+   ```bash
+   docker login
+   ```
+
+3. Build and push the multi-arch image (tags `latest` and the current `package.json` version) with a single command:
+
+   ```bash
+   npm run docker:build:multiarch
+   ```
+
+This command uses `DOCKERHUB_USERNAME` as the image prefix (for example, `"$DOCKERHUB_USERNAME"/opine-mcp-server:latest`) and pushes a multi-architecture manifest for both amd64 and arm64.
+
+Optionally, you can override the default tags (`latest` and the current `package.json` version) by setting a comma-separated `TAGS` environment variable, for example:
 
 ```bash
-# Tag the image with your DockerHub username
-docker tag opine-mcp-server your-username/opine-mcp-server:latest
-docker tag opine-mcp-server your-username/opine-mcp-server:1.0.0
-
-# Push to DockerHub (requires docker login)
-docker push your-username/opine-mcp-server:latest
-docker push your-username/opine-mcp-server:1.0.0
+export TAGS="latest,1.0.5"
 ```
 
 #### Using Pre-built Image
@@ -125,6 +144,8 @@ List deals from Opine CRM with optional parameters:
 - `includeSummary` (optional): Include AI-generated deal summary
 - `includeDeleted` (optional): Include deleted deals
 
+Each deal now also includes `salesProcessId` and `salesProcessStageId` fields when available, which can be resolved via the sales process tools below.
+
 #### `get_deal`
 Get a specific deal by ID:
 - `id` (required): Deal ID (Opine ID or external service ID)
@@ -139,6 +160,25 @@ List evaluations with optional parameters:
 List tickets/requests with optional parameters:
 - `limit` (optional): Number of results (1-1000, default: 100)
 - `offset` (optional): Number of results to skip (default: 0)
+
+#### `list_sales_processes`
+List sales processes configured in Opine:
+- `limit` (optional): Number of results (1-1000, default: 100)
+- `offset` (optional): Number of results to skip (default: 0)
+
+#### `list_sales_process_stages`
+List sales process stages from Opine:
+- `limit` (optional): Number of results (1-1000, default: 100)
+- `offset` (optional): Number of results to skip (default: 0)
+- `includeDeleted` (optional): Include deleted stages
+
+#### `describe_deal_sales_process`
+Get an enriched view of a single deal and its sales process:
+- `id` (required): Deal ID. If this is a Salesforce ID (15 or 18 characters), set `isSalesforceId` to true.
+- `isSalesforceId` (optional): Treat `id` as a Salesforce ID and normalize + prefix with `eid:`.
+- `includeSummary` (optional): Include AI-generated deal summary when fetching the deal
+
+The response includes the raw deal (with `salesProcessId`/`salesProcessStageId`) plus resolved `salesProcess` and `salesProcessStage` metadata where available.
 
 ## API Requirements
 

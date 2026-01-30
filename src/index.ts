@@ -8,7 +8,14 @@ import {
   Tool
 } from '@modelcontextprotocol/sdk/types.js';
 import { OpineClient } from './opine-client.js';
-import { ListDealsParams, GetDealParams, ListEvaluationsParams, ListTicketsParams } from './types.js';
+import {
+  ListDealsParams,
+  GetDealParams,
+  ListEvaluationsParams,
+  ListTicketsParams,
+  ListSalesProcessesParams,
+  ListSalesProcessStagesParams
+} from './types.js';
 import { ensureId18 } from './salesforce-utils.js';
 
 class OpineMCPServer {
@@ -139,6 +146,73 @@ class OpineMCPServer {
               }
             }
           }
+        },
+        {
+          name: 'list_sales_processes',
+          description: 'List sales processes configured in Opine',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              limit: {
+                type: 'number',
+                description: 'Number of results to return (1-1000, default: 100)',
+                minimum: 1,
+                maximum: 1000
+              },
+              offset: {
+                type: 'number',
+                description: 'Number of results to skip (default: 0)',
+                minimum: 0
+              }
+            }
+          }
+        },
+        {
+          name: 'list_sales_process_stages',
+          description: 'List sales process stages from Opine',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              limit: {
+                type: 'number',
+                description: 'Number of results to return (1-1000, default: 100)',
+                minimum: 1,
+                maximum: 1000
+              },
+              offset: {
+                type: 'number',
+                description: 'Number of results to skip (default: 0)',
+                minimum: 0
+              },
+              includeDeleted: {
+                type: 'boolean',
+                description: 'Include deleted sales process stages'
+              }
+            }
+          }
+        },
+        {
+          name: 'describe_deal_sales_process',
+          description: 'Get a deal along with resolved sales process and stage metadata',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              id: {
+                type: 'string',
+                description: 'Deal ID. If this is a Salesforce ID (15 or 18 characters), set isSalesforceId to true.',
+                pattern: '^.+$'
+              },
+              isSalesforceId: {
+                type: 'boolean',
+                description: 'Treat the id as a Salesforce ID (15 or 18 chars); it will be normalized and prefixed with "eid:".'
+              },
+              includeSummary: {
+                type: 'boolean',
+                description: 'Include AI-generated deal summary when fetching the deal'
+              }
+            },
+            required: ['id']
+          }
         }
       ];
 
@@ -196,7 +270,7 @@ class OpineMCPServer {
             const opineId = `eid:${id18}`;
             const params = {
               id: opineId,
-              includeSummary: 'includeSummary' in args ? args.includeSummary as boolean : undefined
+              includeSummary: 'includeSummary' in args ? (args as any).includeSummary as boolean : undefined
             } as GetDealParams;
             const result = await this.opineClient.getDeal(params);
 
@@ -233,6 +307,80 @@ class OpineMCPServer {
                 {
                   type: 'text',
                   text: JSON.stringify(result, null, 2)
+                }
+              ]
+            };
+          }
+
+          case 'list_sales_processes': {
+            const params = (args || {}) as ListSalesProcessesParams;
+            const result = await this.opineClient.listSalesProcesses(params);
+
+            return {
+              content: [
+                {
+                  type: 'text',
+                  text: JSON.stringify(result, null, 2)
+                }
+              ]
+            };
+          }
+
+          case 'list_sales_process_stages': {
+            const params = (args || {}) as ListSalesProcessStagesParams;
+            const result = await this.opineClient.listSalesProcessStages(params);
+
+            return {
+              content: [
+                {
+                  type: 'text',
+                  text: JSON.stringify(result, null, 2)
+                }
+              ]
+            };
+          }
+
+          case 'describe_deal_sales_process': {
+            if (!args || typeof args !== 'object' || !('id' in args) || typeof (args as any).id !== 'string') {
+              throw new Error('Deal ID is required');
+            }
+
+            const idArg = (args as any).id as string;
+            const isSalesforceId = 'isSalesforceId' in (args as any) ? Boolean((args as any).isSalesforceId) : false;
+            const includeSummary = 'includeSummary' in (args as any) ? Boolean((args as any).includeSummary) : false;
+
+            let dealId = idArg;
+            if (isSalesforceId) {
+              const id18 = ensureId18(idArg);
+              dealId = `eid:${id18}`;
+            }
+
+            const deal = await this.opineClient.getDeal({ id: dealId, includeSummary });
+
+            let salesProcess: any = null;
+            let salesProcessStage: any = null;
+
+            if (deal.salesProcessId !== undefined && deal.salesProcessId !== null) {
+              const processes = await this.opineClient.listSalesProcesses({ limit: 1000 });
+              salesProcess = processes.items.find(p => p.id === deal.salesProcessId) ?? null;
+            }
+
+            if (deal.salesProcessStageId !== undefined && deal.salesProcessStageId !== null) {
+              const stages = await this.opineClient.listSalesProcessStages({ limit: 1000 });
+              salesProcessStage = stages.items.find(s => s.id === deal.salesProcessStageId) ?? null;
+            }
+
+            const enriched = {
+              deal,
+              salesProcess,
+              salesProcessStage
+            };
+
+            return {
+              content: [
+                {
+                  type: 'text',
+                  text: JSON.stringify(enriched, null, 2)
                 }
               ]
             };

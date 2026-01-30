@@ -16,6 +16,8 @@ export interface Deal {
   contactId?: string;
   ownerId?: string;
   summary?: string;
+  salesProcessId?: number;
+  salesProcessStageId?: number;
 }
 
 export interface DealsResponse {
@@ -58,6 +60,48 @@ export interface GetDealParams {
 export interface ListEvaluationsParams {
   limit?: number;
   offset?: number;
+}
+
+export interface SalesProcess {
+  id: number;
+  createdAt: string;
+  updatedAt: string;
+  name: string;
+  description?: string;
+  isDefault: boolean;
+  createdByUserId: number;
+}
+
+export interface SalesProcessesResponse {
+  items: SalesProcess[];
+  limit: number;
+  offset: number;
+  totalCount: number;
+}
+
+export interface ListSalesProcessesParams {
+  limit?: number;
+  offset?: number;
+}
+
+export interface SalesProcessStage {
+  id: number;
+  title: string;
+  category: string;
+  deletedAt?: string;
+}
+
+export interface SalesProcessStagesResponse {
+  items: SalesProcessStage[];
+  limit: number;
+  offset: number;
+  totalCount: number;
+}
+
+export interface ListSalesProcessStagesParams {
+  limit?: number;
+  offset?: number;
+  includeDeleted?: boolean;
 }
 
 export interface LinkedDeal {

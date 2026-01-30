@@ -8,14 +8,16 @@
     "build": "tsc",
     "start": "node build/index.js",
     "dev": "tsx src/index.ts",
-    "inspector": "npm run build && npx @modelcontextprotocol/inspector build/index.js",
+    "inspector": "npm run build && npx @modelcontextprotocol/inspector node build/index.js",
     "inspector:config": "npm run build && npx @modelcontextprotocol/inspector mcp-config.json",
     "docker:build": "docker build -t opine-mcp-server .",
+    "docker:build:multiarch": "if [ -z \"$DOCKERHUB_USERNAME\" ]; then echo \"DOCKERHUB_USERNAME env var is required\" >&2; exit 1; fi; TAGS=\"${TAGS:-latest,${npm_package_version}}\"; TAG_ARGS=$(printf \"%s\" \"$TAGS\" | tr ',' '\n' | sed \"s/^/ -t $DOCKERHUB_USERNAME\\/opine-mcp-server:/\" | tr '\n' ' '); eval docker buildx build --platform=linux/amd64,linux/arm64 $TAG_ARGS --push .",
     "docker:run": "docker run -e OPINE_API_KEY=\"$OPINE_API_KEY\" -i opine-mcp-server"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.0.4",
-    "node-fetch": "^3.3.2"
+    "@modelcontextprotocol/sdk": "^1.25.2",
+    "node-fetch": "^3.3.2",
+    "qs": "^6.14.1"
   },
   "devDependencies": {
     "@modelcontextprotocol/inspector": "^0.16.5",
