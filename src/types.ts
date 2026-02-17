@@ -143,3 +143,21 @@ export interface ListTicketsParams {
   limit?: number;
   offset?: number;
 }
+
+export interface DealAssociation {
+  id: number;
+  priority: 'BLOCKER' | 'IMPORTANT' | 'NICE_TO_HAVE';
+  delete?: boolean;
+}
+
+export interface UpdateTicketParams {
+  id: string;
+  title?: string;
+  type?: 'BUG' | 'FEATURE' | 'CUSTOM_1' | 'CUSTOM_2' | 'CUSTOM_3' | 'CUSTOM_4' | 'CUSTOM_5';
+  state?: 'OPEN' | 'PRIORITIZING' | 'ROADMAP' | 'DEFERRED' | 'IN_PROGRESS' | 'CLOSED';
+  description?: any; // Slate node array, markdown string, or null
+  targetDueDate?: string | null;
+  deals?: DealAssociation[];
+  labels?: string[] | null;
+  vendorEntityUrl?: string | null;
+}

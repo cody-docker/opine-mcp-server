@@ -13,7 +13,9 @@ import {
   SalesProcessesResponse,
   ListSalesProcessesParams,
   SalesProcessStagesResponse,
-  ListSalesProcessStagesParams
+  ListSalesProcessStagesParams,
+  Ticket,
+  UpdateTicketParams
 } from './types.js';
 
 export class OpineClient {
@@ -25,10 +27,15 @@ export class OpineClient {
     this.baseUrl = config.baseUrl || 'https://api.tryopine.com/v1';
   }
 
-  private async makeRequest<T>(endpoint: string, params?: Record<string, any>): Promise<T> {
+  private async makeRequest<T>(
+    endpoint: string,
+    params?: Record<string, any>,
+    method: string = 'GET',
+    body?: any
+  ): Promise<T> {
     const url = new URL(`${this.baseUrl}${endpoint}`);
-    
-    if (params) {
+
+    if (params && method === 'GET') {
       Object.entries(params).forEach(([key, value]) => {
         if (value !== undefined) {
           url.searchParams.append(key, String(value));
@@ -36,16 +43,25 @@ export class OpineClient {
       });
     }
 
-    const response = await fetch(url.toString(), {
-      method: 'GET',
-      headers: {
-        'X-API-Key': this.apiKey,
-        'Content-Type': 'application/json'
-      }
-    });
+    const headers: Record<string, string> = {
+      'X-API-Key': this.apiKey,
+      'Content-Type': 'application/json'
+    };
+
+    const requestInit: any = {
+      method,
+      headers
+    };
+
+    if (body !== undefined) {
+      requestInit.body = JSON.stringify(body);
+    }
+
+    const response = await fetch(url.toString(), requestInit);
 
     if (!response.ok) {
-      throw new Error(`Opine API error: ${response.status} ${response.statusText}`);
+      const errorText = await response.text();
+      throw new Error(`Opine API error: ${response.status} ${response.statusText} - ${errorText}`);
     }
 
     return response.json() as Promise<T>;
@@ -74,5 +90,10 @@ export class OpineClient {
 
   async listSalesProcessStages(params: ListSalesProcessStagesParams = {}): Promise<SalesProcessStagesResponse> {
     return this.makeRequest<SalesProcessStagesResponse>('/sales-process-stages', params);
+  }
+
+  async updateTicket(params: UpdateTicketParams): Promise<Ticket> {
+    const { id, ...body } = params;
+    return this.makeRequest<Ticket>(`/tickets/${encodeURIComponent(id)}`, undefined, 'PUT', body);
   }
 }

@@ -14,7 +14,8 @@ import {
   ListEvaluationsParams,
   ListTicketsParams,
   ListSalesProcessesParams,
-  ListSalesProcessStagesParams
+  ListSalesProcessStagesParams,
+  UpdateTicketParams
 } from './types.js';
 import { ensureId18 } from './salesforce-utils.js';
 
@@ -213,6 +214,80 @@ class OpineMCPServer {
             },
             required: ['id']
           }
+        },
+        {
+          name: 'update_ticket',
+          description: 'Update an existing ticket in Opine. Requires tickets:write scope.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              id: {
+                type: 'string',
+                description: 'Ticket ID to update',
+                pattern: '^.+$'
+              },
+              title: {
+                type: 'string',
+                description: 'Ticket title (1-256 characters)',
+                minLength: 1,
+                maxLength: 256
+              },
+              type: {
+                type: 'string',
+                description: 'Ticket type',
+                enum: ['BUG', 'FEATURE', 'CUSTOM_1', 'CUSTOM_2', 'CUSTOM_3', 'CUSTOM_4', 'CUSTOM_5']
+              },
+              state: {
+                type: 'string',
+                description: 'Ticket state',
+                enum: ['OPEN', 'PRIORITIZING', 'ROADMAP', 'DEFERRED', 'IN_PROGRESS', 'CLOSED']
+              },
+              description: {
+                description: 'Ticket description (Slate node array, markdown string, or null to clear)'
+              },
+              targetDueDate: {
+                type: 'string',
+                description: 'Target due date in ISO 8601 format (nullable)',
+                format: 'date-time'
+              },
+              deals: {
+                type: 'array',
+                description: 'Array of deal associations',
+                items: {
+                  type: 'object',
+                  properties: {
+                    id: {
+                      type: 'number',
+                      description: 'Deal ID'
+                    },
+                    priority: {
+                      type: 'string',
+                      description: 'Deal priority',
+                      enum: ['BLOCKER', 'IMPORTANT', 'NICE_TO_HAVE']
+                    },
+                    delete: {
+                      type: 'boolean',
+                      description: 'Set to true to remove this deal association'
+                    }
+                  },
+                  required: ['id', 'priority']
+                }
+              },
+              labels: {
+                type: 'array',
+                description: 'Array of case-sensitive label strings (replaces all existing labels, or clears if null/empty)',
+                items: {
+                  type: 'string'
+                }
+              },
+              vendorEntityUrl: {
+                type: 'string',
+                description: 'Vendor entity URL in URI format (nullable)',
+                format: 'uri'
+              }
+            },
+            required: ['id']
+          }
         }
       ];
 
@@ -381,6 +456,23 @@ class OpineMCPServer {
                 {
                   type: 'text',
                   text: JSON.stringify(enriched, null, 2)
+                }
+              ]
+            };
+          }
+
+          case 'update_ticket': {
+            if (!args || typeof args !== 'object' || !('id' in args) || typeof args.id !== 'string') {
+              throw new Error('Ticket ID is required');
+            }
+            const params = args as unknown as UpdateTicketParams;
+            const result = await this.opineClient.updateTicket(params);
+
+            return {
+              content: [
+                {
+                  type: 'text',
+                  text: JSON.stringify(result, null, 2)
                 }
               ]
             };

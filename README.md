@@ -8,6 +8,7 @@ A Model Context Protocol (MCP) server for querying deals, evaluations, and ticke
 - **Get Deal**: Retrieve specific deal details by ID
 - **List Evaluations**: Query evaluations with pagination
 - **List Tickets**: Query tickets/requests with pagination
+- **Update Ticket**: Update existing tickets with new data
 
 ## Installation
 
@@ -128,7 +129,7 @@ Before using the inspector, make sure to:
 2. Build the project with `npm run build`
 
 The inspector will open a web interface where you can:
-- View available tools (`list_deals`, `get_deal`, `list_evaluations`, `list_tickets`)
+- View available tools (`list_deals`, `get_deal`, `list_evaluations`, `list_tickets`, `update_ticket`)
 - Test tool calls with different parameters
 - See real-time responses from the Opine API
 - Debug any authentication or API issues
@@ -161,6 +162,18 @@ List tickets/requests with optional parameters:
 - `limit` (optional): Number of results (1-1000, default: 100)
 - `offset` (optional): Number of results to skip (default: 0)
 
+#### `update_ticket`
+Update an existing ticket in Opine (requires `tickets:write` scope):
+- `id` (required): Ticket ID to update
+- `title` (optional): Ticket title (1-256 characters)
+- `type` (optional): Ticket type - BUG, FEATURE, CUSTOM_1, CUSTOM_2, CUSTOM_3, CUSTOM_4, CUSTOM_5
+- `state` (optional): Ticket state - OPEN, PRIORITIZING, ROADMAP, DEFERRED, IN_PROGRESS, CLOSED
+- `description` (optional): Ticket description (Slate node array, markdown string, or null to clear)
+- `targetDueDate` (optional): Target due date in ISO 8601 format (nullable)
+- `deals` (optional): Array of deal associations with `id`, `priority` (BLOCKER/IMPORTANT/NICE_TO_HAVE), and optional `delete` flag
+- `labels` (optional): Array of case-sensitive label strings (replaces all existing labels, or clears if null/empty)
+- `vendorEntityUrl` (optional): Vendor entity URL in URI format (nullable)
+
 #### `list_sales_processes`
 List sales processes configured in Opine:
 - `limit` (optional): Number of results (1-1000, default: 100)
@@ -187,7 +200,8 @@ This server requires:
 - The following API scopes:
   - `deals:read` for deal operations
   - `evaluations:read` for evaluation operations
-  - `tickets:read` for ticket operations
+  - `tickets:read` for listing tickets
+  - `tickets:write` for updating tickets
 
 ## Docker Security
 
