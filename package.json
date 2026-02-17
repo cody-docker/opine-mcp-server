@@ -1,6 +1,6 @@
 {
   "name": "opine-mcp-server",
-  "version": "1.0.0",
+  "version": "2.1.0",
   "description": "MCP server for querying Opine deals, evaluations, and tickets",
   "main": "build/index.js",
   "type": "module",

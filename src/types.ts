@@ -28,14 +28,27 @@ export interface DealsResponse {
 }
 
 export interface Evaluation {
-  id: string;
+  id: number;
   createdAt: string;
   updatedAt: string;
   title: string;
-  description?: string;
+  description: string | null;
+  mode: 'PLAN' | 'NO_PLAN' | 'DRAFT';
   active: boolean;
-  organizationId: string;
-  accessCode?: string;
+  organizationId: number;
+  createdByUserId: number | null;
+  accessCode: string;
+  buyerAccessLevel: 'RESTRICTED' | 'ANYONE_WITH_LINK';
+  brandingColorHex: string | null;
+  startDate: string | null;
+  targetEndDate: string | null;
+  buyerNotificationsEnabled: boolean;
+  currentStageId: number | null;
+  currentProcessPositionRank: string | null;
+  allProcessesPositionRank: string | null;
+  derivedFromTemplateId: number | null;
+  salesProcessId: number | null;
+  defaultAssigneeUserId: number | null;
 }
 
 export interface EvaluationsResponse {
@@ -108,13 +121,13 @@ export interface LinkedDeal {
   id: number;
   evaluationId: number;
   name: string;
-  priority: 'BLOCKER' | 'HIGH' | 'MEDIUM' | 'LOW';
+  priority: 'BLOCKER' | 'IMPORTANT' | 'NICE_TO_HAVE';
   sharedWithBuyer: boolean;
 }
 
 export interface Ticket {
-  type: 'BUG' | 'FEATURE_REQUEST' | 'QUESTION' | 'OTHER';
-  state: 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED';
+  type: 'BUG' | 'FEATURE' | 'CUSTOM_1' | 'CUSTOM_2' | 'CUSTOM_3' | 'CUSTOM_4' | 'CUSTOM_5';
+  state: 'OPEN' | 'PRIORITIZING' | 'ROADMAP' | 'DEFERRED' | 'IN_PROGRESS' | 'CLOSED';
   id: number;
   createdAt: string;
   updatedAt: string;
@@ -160,4 +173,32 @@ export interface UpdateTicketParams {
   deals?: DealAssociation[];
   labels?: string[] | null;
   vendorEntityUrl?: string | null;
+}
+
+export interface Note {
+  id: number;
+  createdAt: string;
+  updatedAt: string;
+  title: string;
+  body: any; // Slate nodes array or markdown string
+}
+
+export interface CreateDealNoteParams {
+  dealId: string;
+  title: string;
+  body?: any;
+}
+
+export interface CreateTicketParams {
+  title: string;
+  type: 'BUG' | 'FEATURE' | 'CUSTOM_1' | 'CUSTOM_2' | 'CUSTOM_3' | 'CUSTOM_4' | 'CUSTOM_5';
+  state: 'OPEN' | 'PRIORITIZING' | 'ROADMAP' | 'DEFERRED' | 'IN_PROGRESS' | 'CLOSED';
+  description?: any;
+  targetDueDate?: string;
+  deals?: Array<{
+    id: number | string;
+    priority: 'BLOCKER' | 'IMPORTANT' | 'NICE_TO_HAVE';
+  }>;
+  labels?: string[];
+  vendorEntityUrl?: string;
 }

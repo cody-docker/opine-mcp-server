@@ -15,7 +15,10 @@ import {
   SalesProcessStagesResponse,
   ListSalesProcessStagesParams,
   Ticket,
-  UpdateTicketParams
+  UpdateTicketParams,
+  Note,
+  CreateDealNoteParams,
+  CreateTicketParams
 } from './types.js';
 
 export class OpineClient {
@@ -95,5 +98,19 @@ export class OpineClient {
   async updateTicket(params: UpdateTicketParams): Promise<Ticket> {
     const { id, ...body } = params;
     return this.makeRequest<Ticket>(`/tickets/${encodeURIComponent(id)}`, undefined, 'PUT', body);
+  }
+
+  async createDealNote(params: CreateDealNoteParams): Promise<Note> {
+    const { dealId, ...body } = params;
+    return this.makeRequest<Note>(
+      `/deals/${encodeURIComponent(dealId)}/notes`,
+      undefined,
+      'POST',
+      body
+    );
+  }
+
+  async createTicket(params: CreateTicketParams): Promise<Ticket> {
+    return this.makeRequest<Ticket>('/tickets', undefined, 'POST', params);
   }
 }

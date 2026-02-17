@@ -15,7 +15,9 @@ import {
   ListTicketsParams,
   ListSalesProcessesParams,
   ListSalesProcessStagesParams,
-  UpdateTicketParams
+  UpdateTicketParams,
+  CreateDealNoteParams,
+  CreateTicketParams
 } from './types.js';
 import { ensureId18 } from './salesforce-utils.js';
 
@@ -27,7 +29,7 @@ class OpineMCPServer {
     this.server = new Server(
       {
         name: 'opine-mcp-server',
-        version: '1.0.0'
+        version: '2.1.0'
       },
       {
         capabilities: {
@@ -288,6 +290,88 @@ class OpineMCPServer {
             },
             required: ['id']
           }
+        },
+        {
+          name: 'create_deal_note',
+          description: 'Add a note to a specific deal. Requires deals:write scope.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              dealId: {
+                type: 'string',
+                description: 'Deal ID (Opine ID or external service ID)',
+                pattern: '^.+$'
+              },
+              title: {
+                type: 'string',
+                description: 'Note title',
+                maxLength: 512
+              },
+              body: {
+                description: 'Note body (Slate nodes array or markdown string, optional)'
+              }
+            },
+            required: ['dealId', 'title']
+          }
+        },
+        {
+          name: 'create_ticket',
+          description: 'Create a new ticket in Opine. Requires tickets:write scope.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              title: {
+                type: 'string',
+                description: 'Ticket title (1-256 characters)',
+                minLength: 1,
+                maxLength: 256
+              },
+              type: {
+                type: 'string',
+                description: 'Ticket type',
+                enum: ['BUG', 'FEATURE', 'CUSTOM_1', 'CUSTOM_2', 'CUSTOM_3', 'CUSTOM_4', 'CUSTOM_5']
+              },
+              state: {
+                type: 'string',
+                description: 'Ticket state',
+                enum: ['OPEN', 'PRIORITIZING', 'ROADMAP', 'DEFERRED', 'IN_PROGRESS', 'CLOSED']
+              },
+              description: {
+                description: 'Ticket description (Slate node array or markdown string, optional)'
+              },
+              targetDueDate: {
+                type: 'string',
+                description: 'Target due date in ISO 8601 format',
+                format: 'date-time'
+              },
+              deals: {
+                type: 'array',
+                description: 'Array of deal associations',
+                items: {
+                  type: 'object',
+                  properties: {
+                    id: { description: 'Deal ID (numeric or vendor entity ID string)' },
+                    priority: {
+                      type: 'string',
+                      enum: ['BLOCKER', 'IMPORTANT', 'NICE_TO_HAVE']
+                    }
+                  },
+                  required: ['id', 'priority']
+                }
+              },
+              labels: {
+                type: 'array',
+                description: 'Array of label strings',
+                items: { type: 'string' }
+              },
+              vendorEntityUrl: {
+                type: 'string',
+                description: 'Vendor entity URL',
+                format: 'uri'
+              }
+            },
+            required: ['title', 'type', 'state']
+          }
         }
       ];
 
@@ -467,6 +551,52 @@ class OpineMCPServer {
             }
             const params = args as unknown as UpdateTicketParams;
             const result = await this.opineClient.updateTicket(params);
+
+            return {
+              content: [
+                {
+                  type: 'text',
+                  text: JSON.stringify(result, null, 2)
+                }
+              ]
+            };
+          }
+
+          case 'create_deal_note': {
+            if (!args || typeof args !== 'object' || !('dealId' in args) || typeof args.dealId !== 'string') {
+              throw new Error('Deal ID is required');
+            }
+            if (!('title' in args) || typeof args.title !== 'string') {
+              throw new Error('Note title is required');
+            }
+            const params = args as unknown as CreateDealNoteParams;
+            const result = await this.opineClient.createDealNote(params);
+
+            return {
+              content: [
+                {
+                  type: 'text',
+                  text: JSON.stringify(result, null, 2)
+                }
+              ]
+            };
+          }
+
+          case 'create_ticket': {
+            if (!args || typeof args !== 'object') {
+              throw new Error('Invalid parameters for create_ticket');
+            }
+            if (!('title' in args) || typeof args.title !== 'string') {
+              throw new Error('Ticket title is required');
+            }
+            if (!('type' in args) || typeof args.type !== 'string') {
+              throw new Error('Ticket type is required');
+            }
+            if (!('state' in args) || typeof args.state !== 'string') {
+              throw new Error('Ticket state is required');
+            }
+            const params = args as unknown as CreateTicketParams;
+            const result = await this.opineClient.createTicket(params);
 
             return {
               content: [
