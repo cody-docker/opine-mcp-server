@@ -17,6 +17,8 @@ import {
   Ticket,
   UpdateTicketParams,
   Note,
+  NotesResponse,
+  ListNotesParams,
   CreateDealNoteParams,
   CreateTicketParams
 } from './types.js';
@@ -98,6 +100,10 @@ export class OpineClient {
   async updateTicket(params: UpdateTicketParams): Promise<Ticket> {
     const { id, ...body } = params;
     return this.makeRequest<Ticket>(`/tickets/${encodeURIComponent(id)}`, undefined, 'PUT', body);
+  }
+
+  async listNotes(params: ListNotesParams = {}): Promise<NotesResponse> {
+    return this.makeRequest<NotesResponse>('/notes', params);
   }
 
   async createDealNote(params: CreateDealNoteParams): Promise<Note> {

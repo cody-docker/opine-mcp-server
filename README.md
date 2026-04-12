@@ -5,10 +5,14 @@ A Model Context Protocol (MCP) server for querying deals, evaluations, and ticke
 ## Features
 
 - **List Deals**: Query deals with filtering options
-- **Get Deal**: Retrieve specific deal details by ID
+- **Get Deal**: Retrieve specific deal details by ID (Opine ID or Salesforce ID)
 - **List Evaluations**: Query evaluations with pagination
 - **List Tickets**: Query tickets/requests with pagination
-- **Update Ticket**: Update existing tickets with new data
+- **List Notes**: Query notes with optional deal filter
+- **Sales Process Tools**: Query and enrich deals with sales process and stage metadata
+- **Create Ticket**: Create new tickets
+- **Update Ticket**: Update existing tickets
+- **Create Deal Note**: Add notes to deals
 
 ## Installation
 
@@ -129,7 +133,7 @@ Before using the inspector, make sure to:
 2. Build the project with `npm run build`
 
 The inspector will open a web interface where you can:
-- View available tools (`list_deals`, `get_deal`, `list_evaluations`, `list_tickets`, `update_ticket`)
+- View all available tools
 - Test tool calls with different parameters
 - See real-time responses from the Opine API
 - Debug any authentication or API issues
@@ -138,31 +142,76 @@ The inspector will open a web interface where you can:
 
 The server provides the following tools:
 
-#### `list_deals`
+#### Read tools
+
+##### `list_deals`
 List deals from Opine CRM with optional parameters:
 - `limit` (optional): Number of results (1-1000, default: 100)
 - `offset` (optional): Number of results to skip (default: 0)
 - `includeSummary` (optional): Include AI-generated deal summary
 - `includeDeleted` (optional): Include deleted deals
 
-Each deal now also includes `salesProcessId` and `salesProcessStageId` fields when available, which can be resolved via the sales process tools below.
+Each deal also includes `salesProcessId` and `salesProcessStageId` fields when available, which can be resolved via the sales process tools below.
 
-#### `get_deal`
+##### `get_deal`
 Get a specific deal by ID:
 - `id` (required): Deal ID (Opine ID or external service ID)
 - `includeSummary` (optional): Include AI-generated deal summary
 
-#### `list_evaluations`
+##### `get_salesforce_deal`
+Get a specific deal by Salesforce opportunity ID. Automatically normalizes 15- or 18-character Salesforce IDs and prepends the `eid:` prefix:
+- `id` (required): Salesforce deal ID (15 or 18 characters)
+- `includeSummary` (optional): Include AI-generated deal summary
+
+##### `list_evaluations`
 List evaluations with optional parameters:
 - `limit` (optional): Number of results (1-1000, default: 100)
 - `offset` (optional): Number of results to skip (default: 0)
 
-#### `list_tickets`
+##### `list_tickets`
 List tickets/requests with optional parameters:
 - `limit` (optional): Number of results (1-1000, default: 100)
 - `offset` (optional): Number of results to skip (default: 0)
 
-#### `update_ticket`
+##### `list_notes`
+List notes with optional parameters (requires `notes:read` scope):
+- `limit` (optional): Number of results (1-1000, default: 100)
+- `offset` (optional): Number of results to skip (default: 0)
+- `dealId` (optional): Filter by deal using Opine numeric ID or `eid:`-prefixed vendor entity ID
+
+##### `list_sales_processes`
+List sales processes configured in Opine:
+- `limit` (optional): Number of results (1-1000, default: 100)
+- `offset` (optional): Number of results to skip (default: 0)
+
+##### `list_sales_process_stages`
+List sales process stages from Opine:
+- `limit` (optional): Number of results (1-1000, default: 100)
+- `offset` (optional): Number of results to skip (default: 0)
+- `includeDeleted` (optional): Include deleted stages
+
+##### `describe_deal_sales_process`
+Get an enriched view of a single deal and its sales process:
+- `id` (required): Deal ID. If this is a Salesforce ID (15 or 18 characters), set `isSalesforceId` to true.
+- `isSalesforceId` (optional): Treat `id` as a Salesforce ID and normalize + prefix with `eid:`.
+- `includeSummary` (optional): Include AI-generated deal summary when fetching the deal
+
+The response includes the raw deal (with `salesProcessId`/`salesProcessStageId`) plus resolved `salesProcess` and `salesProcessStage` metadata where available.
+
+#### Write tools
+
+##### `create_ticket`
+Create a new ticket in Opine (requires `tickets:write` scope):
+- `title` (required): Ticket title (1-256 characters)
+- `type` (required): Ticket type - BUG, FEATURE, CUSTOM_1, CUSTOM_2, CUSTOM_3, CUSTOM_4, CUSTOM_5
+- `state` (required): Ticket state - OPEN, PRIORITIZING, ROADMAP, DEFERRED, IN_PROGRESS, CLOSED
+- `description` (optional): Ticket description (Slate node array or markdown string)
+- `targetDueDate` (optional): Target due date in ISO 8601 format
+- `deals` (optional): Array of deal associations with `id` and `priority` (BLOCKER/IMPORTANT/NICE_TO_HAVE)
+- `labels` (optional): Array of label strings
+- `vendorEntityUrl` (optional): Vendor entity URL in URI format
+
+##### `update_ticket`
 Update an existing ticket in Opine (requires `tickets:write` scope):
 - `id` (required): Ticket ID to update
 - `title` (optional): Ticket title (1-256 characters)
@@ -174,34 +223,26 @@ Update an existing ticket in Opine (requires `tickets:write` scope):
 - `labels` (optional): Array of case-sensitive label strings (replaces all existing labels, or clears if null/empty)
 - `vendorEntityUrl` (optional): Vendor entity URL in URI format (nullable)
 
-#### `list_sales_processes`
-List sales processes configured in Opine:
-- `limit` (optional): Number of results (1-1000, default: 100)
-- `offset` (optional): Number of results to skip (default: 0)
-
-#### `list_sales_process_stages`
-List sales process stages from Opine:
-- `limit` (optional): Number of results (1-1000, default: 100)
-- `offset` (optional): Number of results to skip (default: 0)
-- `includeDeleted` (optional): Include deleted stages
-
-#### `describe_deal_sales_process`
-Get an enriched view of a single deal and its sales process:
-- `id` (required): Deal ID. If this is a Salesforce ID (15 or 18 characters), set `isSalesforceId` to true.
-- `isSalesforceId` (optional): Treat `id` as a Salesforce ID and normalize + prefix with `eid:`.
-- `includeSummary` (optional): Include AI-generated deal summary when fetching the deal
-
-The response includes the raw deal (with `salesProcessId`/`salesProcessStageId`) plus resolved `salesProcess` and `salesProcessStage` metadata where available.
+##### `create_deal_note`
+Add a note to a specific deal (requires `deals:write` scope):
+- `dealId` (required): Deal ID (Opine ID or external service ID)
+- `title` (required): Note title (max 512 characters)
+- `body` (optional): Note body (Slate nodes array or markdown string)
 
 ## API Requirements
 
 This server requires:
 - A valid Opine API key
 - The following API scopes:
-  - `deals:read` for deal operations
-  - `evaluations:read` for evaluation operations
-  - `tickets:read` for listing tickets
-  - `tickets:write` for updating tickets
+
+| Scope | Used by |
+|---|---|
+| `deals:read` | `list_deals`, `get_deal`, `get_salesforce_deal`, `describe_deal_sales_process` |
+| `evaluations:read` | `list_evaluations` |
+| `tickets:read` | `list_tickets` |
+| `notes:read` | `list_notes` |
+| `tickets:write` | `create_ticket`, `update_ticket` |
+| `deals:write` | `create_deal_note` |
 
 ## Docker Security
 

@@ -181,6 +181,31 @@ export interface Note {
   updatedAt: string;
   title: string;
   body: any; // Slate nodes array or markdown string
+  organizationId?: number;
+  createdByUserId?: number;
+  deal?: {
+    id: number;
+    name: string;
+  };
+  creatorUser?: {
+    id: number;
+    email: string;
+    firstName: string;
+    lastName: string;
+  };
+}
+
+export interface NotesResponse {
+  items: Note[];
+  limit: number;
+  offset: number;
+  totalCount: number;
+}
+
+export interface ListNotesParams {
+  limit?: number;
+  offset?: number;
+  dealId?: string; // Opine numeric ID or "eid:"-prefixed vendor entity ID
 }
 
 export interface CreateDealNoteParams {

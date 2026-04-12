@@ -15,6 +15,7 @@ import {
   ListTicketsParams,
   ListSalesProcessesParams,
   ListSalesProcessStagesParams,
+  ListNotesParams,
   UpdateTicketParams,
   CreateDealNoteParams,
   CreateTicketParams
@@ -215,6 +216,30 @@ class OpineMCPServer {
               }
             },
             required: ['id']
+          }
+        },
+        {
+          name: 'list_notes',
+          description: 'List notes from Opine. Requires notes:read scope.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              limit: {
+                type: 'number',
+                description: 'Number of results to return (1-1000, default: 100)',
+                minimum: 1,
+                maximum: 1000
+              },
+              offset: {
+                type: 'number',
+                description: 'Number of results to skip (default: 0)',
+                minimum: 0
+              },
+              dealId: {
+                type: 'string',
+                description: 'Filter by deal using Opine numeric ID or "eid:"-prefixed vendor entity ID'
+              }
+            }
           }
         },
         {
@@ -540,6 +565,20 @@ class OpineMCPServer {
                 {
                   type: 'text',
                   text: JSON.stringify(enriched, null, 2)
+                }
+              ]
+            };
+          }
+
+          case 'list_notes': {
+            const params = (args || {}) as ListNotesParams;
+            const result = await this.opineClient.listNotes(params);
+
+            return {
+              content: [
+                {
+                  type: 'text',
+                  text: JSON.stringify(result, null, 2)
                 }
               ]
             };
