@@ -42,16 +42,13 @@ This repository implements a Model Context Protocol (MCP) server that exposes Op
   - An MCP `Server` instance from `@modelcontextprotocol/sdk` configured with basic metadata (name/version) and `tools` capabilities.
   - A lazily-initialized `OpineClient` instance that is created in `run()` after reading `process.env.OPINE_API_KEY`.
 - Registers request handlers:
-  - `ListToolsRequestSchema` — returns a static list of MCP tools exposed by this server:
-    - `list_deals`
-    - `get_deal`
-    - `get_salesforce_deal`
-    - `list_evaluations`
-    - `list_tickets`
+  - `ListToolsRequestSchema` — returns a static list of 12 MCP tools exposed by this server:
+    - Read: `list_deals`, `get_deal`, `get_salesforce_deal`, `list_evaluations`, `list_tickets`, `list_notes`, `list_sales_processes`, `list_sales_process_stages`, `describe_deal_sales_process`
+    - Write: `create_ticket`, `update_ticket`, `create_deal_note`
   - `CallToolRequestSchema` — dispatches tool calls via a `switch (name)` and delegates to the appropriate `OpineClient` method.
 - Tool behaviors:
-  - `list_deals` / `list_evaluations` / `list_tickets`:
-    - Accept optional pagination parameters (`limit`, `offset`) plus tool-specific flags (e.g., `includeSummary`, `includeDeleted` for deals).
+  - `list_deals` / `list_evaluations` / `list_tickets` / `list_notes`:
+    - Accept optional pagination parameters (`limit`, `offset`) plus tool-specific flags (e.g., `includeSummary`, `includeDeleted` for deals; `dealId` filter for notes).
     - Call the corresponding `OpineClient` list method with a typed params object from `src/types.ts`.
   - `get_deal`:
     - Accepts a generic Opine or external deal ID and optional `includeSummary` flag.
@@ -64,6 +61,11 @@ This repository implements a Model Context Protocol (MCP) server that exposes Op
     - Provide list-style access to sales process and stage metadata that correspond to the `salesProcessId` and `salesProcessStageId` fields on deals.
   - `describe_deal_sales_process`:
     - Orchestrates `getDeal`, `listSalesProcesses`, and `listSalesProcessStages` to return an enriched object containing the deal plus its resolved sales process and stage.
+  - `create_ticket` / `update_ticket` (require `tickets:write` scope):
+    - `create_ticket` requires `title`, `type`, and `state`; all other fields optional.
+    - `update_ticket` requires `id`; all other fields optional (supports nullable fields to clear values).
+  - `create_deal_note` (requires `deals:write` scope):
+    - Requires `dealId` and `title`; `body` is optional (Slate nodes or markdown string).
 - All tool responses are returned as a single MCP `text` content item containing pretty-printed JSON (`JSON.stringify(result, null, 2)`).
 - `run()` connects the MCP server over stdio using `StdioServerTransport`, exits with a non-zero status if `OPINE_API_KEY` is missing, and logs startup and error messages to stderr.
 
@@ -85,6 +87,12 @@ This repository implements a Model Context Protocol (MCP) server that exposes Op
   - `getDeal(params: GetDealParams): Promise<Deal>` — `GET /deals/:id`, with any extra query parameters (e.g., `includeSummary`).
   - `listEvaluations(params: ListEvaluationsParams = {}): Promise<EvaluationsResponse>` — `GET /evaluations`.
   - `listTickets(params: ListTicketsParams = {}): Promise<TicketsResponse>` — `GET /tickets`.
+  - `listNotes(params: ListNotesParams = {}): Promise<NotesResponse>` — `GET /notes`, supports optional `dealId` filter.
+  - `listSalesProcesses(params: ListSalesProcessesParams = {}): Promise<SalesProcessesResponse>` — `GET /sales-processes`.
+  - `listSalesProcessStages(params: ListSalesProcessStagesParams = {}): Promise<SalesProcessStagesResponse>` — `GET /sales-process-stages`.
+  - `updateTicket(params: UpdateTicketParams): Promise<Ticket>` — `PUT /tickets/:id`.
+  - `createTicket(params: CreateTicketParams): Promise<Ticket>` — `POST /tickets`.
+  - `createDealNote(params: CreateDealNoteParams): Promise<Note>` — `POST /deals/:id/notes`.
 
 This separation keeps transport and Opine-specific logic in `OpineClient`, while `src/index.ts` remains focused on MCP protocol wiring and tool definitions.
 
@@ -94,7 +102,9 @@ This separation keeps transport and Opine-specific logic in `OpineClient`, while
   - Configuration: `OpineConfig`.
   - Deals: `Deal`, `DealsResponse`, `ListDealsParams`, `GetDealParams`.
   - Evaluations: `Evaluation`, `EvaluationsResponse`, `ListEvaluationsParams`.
-  - Tickets: `Ticket`, `LinkedDeal`, `TicketsResponse`, `ListTicketsParams`.
+  - Tickets: `Ticket`, `LinkedDeal`, `TicketsResponse`, `ListTicketsParams`, `DealAssociation`, `UpdateTicketParams`, `CreateTicketParams`.
+  - Notes: `Note`, `NotesResponse`, `ListNotesParams`, `CreateDealNoteParams`.
+  - Sales processes: `SalesProcess`, `SalesProcessesResponse`, `ListSalesProcessesParams`, `SalesProcessStage`, `SalesProcessStagesResponse`, `ListSalesProcessStagesParams`.
 - The MCP server and `OpineClient` both import from this module to:
   - Share a single source of truth for parameter and payload shapes.
   - Ensure that any new Opine endpoints or tools can be added by first defining types here, then wiring through `OpineClient` and `src/index.ts`.
